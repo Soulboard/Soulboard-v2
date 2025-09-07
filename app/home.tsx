@@ -7,6 +7,7 @@ import { TransferFunds } from "@/components/transfer";
 import { DelegatedSigner } from "@/components/delegated-signer";
 import { LogoutButton } from "@/components/logout";
 import { LoginButton } from "@/components/login";
+import { CreateCampaignForm } from "@/components/create-campaign";
 
 export function HomeContent() {
   const { wallet, status: walletStatus } = useWallet();
@@ -102,6 +103,12 @@ export function HomeContent() {
         </div>
         <TransferFunds />
         <DelegatedSigner />
+      </div>
+
+      {/* Campaign Creation Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Create Campaign</h2>
+        <CreateCampaignForm />
       </div>
     </div>
   );

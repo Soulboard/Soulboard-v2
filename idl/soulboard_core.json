@@ -1,0 +1,2225 @@
+{
+  "address": "6GetNC8W9RUzWeTbk5VmKhfwpakhzAqjEPffGJMtq8y7",
+  "metadata": {
+    "name": "soulboard_core",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_budget",
+      "discriminator": [
+        8,
+        21,
+        47,
+        83,
+        188,
+        233,
+        214,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_campaign_id",
+          "type": "u32"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "add_keeper",
+      "discriminator": [
+        73,
+        181,
+        232,
+        2,
+        99,
+        47,
+        150,
+        179
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "provider_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "keeper",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "add_location",
+      "discriminator": [
+        90,
+        50,
+        252,
+        114,
+        26,
+        199,
+        72,
+        174
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ad_provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  95,
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        },
+        {
+          "name": "location",
+          "type": "pubkey"
+        },
+        {
+          "name": "device_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "calculate_and_distribute_fees",
+      "discriminator": [
+        46,
+        9,
+        165,
+        255,
+        190,
+        253,
+        104,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign.authority",
+                "account": "Campaign"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "complete_campaign",
+      "discriminator": [
+        238,
+        164,
+        40,
+        81,
+        211,
+        55,
+        55,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign.authority",
+                "account": "Campaign"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "create_campaign",
+      "discriminator": [
+        111,
+        131,
+        187,
+        98,
+        160,
+        193,
+        114,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        },
+        {
+          "name": "campaign_name",
+          "type": "string"
+        },
+        {
+          "name": "campaign_description",
+          "type": "string"
+        },
+        {
+          "name": "running_days",
+          "type": "u32"
+        },
+        {
+          "name": "hours_per_day",
+          "type": "u32"
+        },
+        {
+          "name": "base_fee_per_hour",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "get_all_providers",
+      "discriminator": [
+        82,
+        15,
+        164,
+        198,
+        204,
+        191,
+        49,
+        81
+      ],
+      "accounts": [
+        {
+          "name": "provider_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [],
+      "returns": {
+        "vec": "pubkey"
+      }
+    },
+    {
+      "name": "get_device",
+      "discriminator": [
+        187,
+        176,
+        72,
+        3,
+        250,
+        21,
+        28,
+        62
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ad_provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  95,
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "device_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "initialize_registry",
+      "discriminator": [
+        189,
+        181,
+        20,
+        17,
+        174,
+        57,
+        249,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "provider_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_provider",
+      "discriminator": [
+        254,
+        209,
+        54,
+        184,
+        46,
+        197,
+        109,
+        78
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ad_provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  95,
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "location",
+          "type": "string"
+        },
+        {
+          "name": "contact_email",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "remove_keeper",
+      "discriminator": [
+        193,
+        167,
+        169,
+        215,
+        44,
+        36,
+        88,
+        247
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "provider_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "keeper",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "remove_location",
+      "discriminator": [
+        85,
+        2,
+        35,
+        12,
+        215,
+        19,
+        137,
+        25
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ad_provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  95,
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        },
+        {
+          "name": "location",
+          "type": "pubkey"
+        },
+        {
+          "name": "device_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_campaign_performance",
+      "discriminator": [
+        197,
+        49,
+        129,
+        45,
+        219,
+        139,
+        237,
+        225
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign.authority",
+                "account": "Campaign"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "device_feed",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101,
+                  95,
+                  102,
+                  101,
+                  101,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "device_id"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                14,
+                38,
+                213,
+                253,
+                168,
+                202,
+                68,
+                88,
+                217,
+                77,
+                5,
+                51,
+                39,
+                117,
+                252,
+                224,
+                34,
+                135,
+                49,
+                219,
+                151,
+                201,
+                41,
+                153,
+                252,
+                159,
+                241,
+                27,
+                192,
+                195,
+                94,
+                255
+              ]
+            }
+          }
+        },
+        {
+          "name": "oracle_program",
+          "address": "xF4A8Ksy6WSzJpskfiVUit4osedmBorP3bgDe9uKu2e"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        },
+        {
+          "name": "device_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "update_provider",
+      "discriminator": [
+        52,
+        208,
+        141,
+        191,
+        164,
+        54,
+        108,
+        150
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "ad_provider"
+          ]
+        },
+        {
+          "name": "ad_provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  95,
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider_metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114,
+                  95,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "location",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "contact_email",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "is_active",
+          "type": {
+            "option": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "name": "withdraw_earnings",
+      "discriminator": [
+        6,
+        132,
+        233,
+        254,
+        241,
+        87,
+        247,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "ad_provider"
+          ]
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign.authority",
+                "account": "Campaign"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ad_provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  95,
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_id",
+          "type": "u32"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AdProvider",
+      "discriminator": [
+        69,
+        236,
+        248,
+        123,
+        232,
+        16,
+        180,
+        43
+      ]
+    },
+    {
+      "name": "Campaign",
+      "discriminator": [
+        50,
+        40,
+        49,
+        11,
+        157,
+        220,
+        229,
+        192
+      ]
+    },
+    {
+      "name": "DeviceFeed",
+      "discriminator": [
+        148,
+        156,
+        211,
+        142,
+        23,
+        149,
+        206,
+        54
+      ]
+    },
+    {
+      "name": "ProviderMetadata",
+      "discriminator": [
+        235,
+        154,
+        61,
+        218,
+        139,
+        14,
+        188,
+        206
+      ]
+    },
+    {
+      "name": "ProviderRegistry",
+      "discriminator": [
+        27,
+        101,
+        68,
+        38,
+        206,
+        197,
+        61,
+        114
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BudgetAdded",
+      "discriminator": [
+        227,
+        8,
+        82,
+        112,
+        239,
+        227,
+        92,
+        169
+      ]
+    },
+    {
+      "name": "CampaignCompleted",
+      "discriminator": [
+        114,
+        100,
+        117,
+        191,
+        22,
+        109,
+        23,
+        132
+      ]
+    },
+    {
+      "name": "CampaignCreated",
+      "discriminator": [
+        9,
+        98,
+        69,
+        61,
+        53,
+        131,
+        64,
+        152
+      ]
+    },
+    {
+      "name": "DeviceOrdered",
+      "discriminator": [
+        99,
+        22,
+        157,
+        161,
+        130,
+        197,
+        6,
+        100
+      ]
+    },
+    {
+      "name": "EarningsWithdrawn",
+      "discriminator": [
+        2,
+        155,
+        160,
+        28,
+        85,
+        112,
+        127,
+        79
+      ]
+    },
+    {
+      "name": "FeesCalculated",
+      "discriminator": [
+        224,
+        2,
+        105,
+        119,
+        225,
+        171,
+        26,
+        89
+      ]
+    },
+    {
+      "name": "LocationAdded",
+      "discriminator": [
+        19,
+        56,
+        80,
+        30,
+        71,
+        86,
+        61,
+        13
+      ]
+    },
+    {
+      "name": "LocationRemoved",
+      "discriminator": [
+        204,
+        145,
+        67,
+        119,
+        176,
+        137,
+        100,
+        59
+      ]
+    },
+    {
+      "name": "PerformanceUpdated",
+      "discriminator": [
+        53,
+        184,
+        221,
+        195,
+        192,
+        50,
+        181,
+        79
+      ]
+    },
+    {
+      "name": "ProviderMetadataUpdated",
+      "discriminator": [
+        156,
+        94,
+        247,
+        112,
+        106,
+        223,
+        215,
+        99
+      ]
+    },
+    {
+      "name": "ProviderRegistered",
+      "discriminator": [
+        38,
+        209,
+        137,
+        78,
+        185,
+        19,
+        147,
+        14
+      ]
+    },
+    {
+      "name": "RegistryInitialized",
+      "discriminator": [
+        144,
+        138,
+        62,
+        105,
+        58,
+        38,
+        100,
+        177
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "DeviceNotFound",
+      "msg": "Device not found"
+    },
+    {
+      "code": 6001,
+      "name": "DeviceNotAvailable",
+      "msg": "Device not available"
+    },
+    {
+      "code": 6002,
+      "name": "DeviceNotBooked",
+      "msg": "Device not booked"
+    },
+    {
+      "code": 6003,
+      "name": "RegistryNotInitialized",
+      "msg": "Provider registry not initialized"
+    },
+    {
+      "code": 6004,
+      "name": "ProviderNotInRegistry",
+      "msg": "Provider not found in registry"
+    },
+    {
+      "code": 6005,
+      "name": "RegistryFull",
+      "msg": "Registry is full, cannot add more providers"
+    },
+    {
+      "code": 6006,
+      "name": "CalculationError",
+      "msg": "Calculation error"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientBudget",
+      "msg": "Insufficient budget"
+    },
+    {
+      "code": 6008,
+      "name": "NoViews",
+      "msg": "No views recorded"
+    },
+    {
+      "code": 6009,
+      "name": "CampaignNotCompleted",
+      "msg": "Campaign not completed"
+    },
+    {
+      "code": 6010,
+      "name": "CampaignNotActive",
+      "msg": "Campaign not active"
+    },
+    {
+      "code": 6011,
+      "name": "ProviderNotInCampaign",
+      "msg": "Provider not in campaign"
+    },
+    {
+      "code": 6012,
+      "name": "NoEarningsToWithdraw",
+      "msg": "No earnings to withdraw"
+    },
+    {
+      "code": 6013,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: Only deployer or keepers can perform this action"
+    }
+  ],
+  "types": [
+    {
+      "name": "AdProvider",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "devices",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Soulboard"
+                }
+              }
+            }
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "location",
+            "type": "string"
+          },
+          {
+            "name": "contact_email",
+            "type": "string"
+          },
+          {
+            "name": "rating",
+            "type": "u8"
+          },
+          {
+            "name": "total_campaigns",
+            "type": "u32"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "total_earnings",
+            "type": "u64"
+          },
+          {
+            "name": "pending_payments",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BudgetAdded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Campaign",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "campaign_name",
+            "type": "string"
+          },
+          {
+            "name": "campaign_description",
+            "type": "string"
+          },
+          {
+            "name": "campaign_budget",
+            "type": "u64"
+          },
+          {
+            "name": "campaign_status",
+            "type": {
+              "defined": {
+                "name": "CampaignStatus"
+              }
+            }
+          },
+          {
+            "name": "campaign_providers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "campaign_locations",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "running_days",
+            "type": "u32"
+          },
+          {
+            "name": "hours_per_day",
+            "type": "u32"
+          },
+          {
+            "name": "base_fee_per_hour",
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee",
+            "type": "u64"
+          },
+          {
+            "name": "total_distributed",
+            "type": "u64"
+          },
+          {
+            "name": "campaign_performance",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ProviderPerformance"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "Completed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceFeed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "channel_id",
+            "type": "u32"
+          },
+          {
+            "name": "last_entry_id",
+            "type": "u32"
+          },
+          {
+            "name": "total_views",
+            "type": "u64"
+          },
+          {
+            "name": "total_taps",
+            "type": "u64"
+          },
+          {
+            "name": "last_update_ts",
+            "type": "i64"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceOrdered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device_id",
+            "type": "u32"
+          },
+          {
+            "name": "device_state",
+            "type": {
+              "defined": {
+                "name": "DeviceState"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Available"
+          },
+          {
+            "name": "Booked"
+          },
+          {
+            "name": "Ordered"
+          },
+          {
+            "name": "Paused"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EarningsWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FeesCalculated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "total_distributed",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationAdded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationRemoved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PerformanceUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign_id",
+            "type": "u32"
+          },
+          {
+            "name": "device_id",
+            "type": "u32"
+          },
+          {
+            "name": "total_views",
+            "type": "u64"
+          },
+          {
+            "name": "total_taps",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "provider_pda",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "location",
+            "type": "string"
+          },
+          {
+            "name": "device_count",
+            "type": "u32"
+          },
+          {
+            "name": "available_devices",
+            "type": "u32"
+          },
+          {
+            "name": "rating",
+            "type": "u8"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderMetadataUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "available_devices",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderPerformance",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider",
+            "type": "pubkey"
+          },
+          {
+            "name": "device_id",
+            "type": "u32"
+          },
+          {
+            "name": "total_views",
+            "type": "u64"
+          },
+          {
+            "name": "total_taps",
+            "type": "u64"
+          },
+          {
+            "name": "calculated_earnings",
+            "type": "u64"
+          },
+          {
+            "name": "base_fee_earned",
+            "type": "u64"
+          },
+          {
+            "name": "performance_fee_earned",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "location",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderRegistry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deployer",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_providers",
+            "type": "u32"
+          },
+          {
+            "name": "providers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "keepers",
+            "type": {
+              "vec": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "registry",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Soulboard",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device_id",
+            "type": "u32"
+          },
+          {
+            "name": "device_state",
+            "type": {
+              "defined": {
+                "name": "DeviceState"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

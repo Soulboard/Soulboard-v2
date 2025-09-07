@@ -1,12 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useWallet } from "@crossmint/client-sdk-react-ui";
 import { PublicKey } from "@solana/web3.js";
-import {
-  createSolTransferTransaction,
-  createTokenTransferTransaction,
-} from "@/lib/createTransaction";
+import { useTransferFunds } from "@/hooks/useContractOperations";
 
 const isSolanaAddressValid = (address: string) => {
   try {
@@ -18,54 +14,40 @@ const isSolanaAddressValid = (address: string) => {
 };
 
 export function TransferFunds() {
-  const { wallet, type } = useWallet();
-  const [token, setToken] = useState<"sol" | "usdc" | null>("sol");
-  const [recipient, setRecipient] = useState<string | null>(null);
-  const [amount, setAmount] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { transferFunds, isLoading, error, wallet, reset } = useTransferFunds();
+  const [token, setToken] = useState<"sol" | "usdc">("sol");
+  const [recipient, setRecipient] = useState<string>("");
+  const [amount, setAmount] = useState<number>(0);
   const [txnHash, setTxnHash] = useState<string | null>(null);
 
   async function handleOnTransfer() {
-    if (
-      wallet == null ||
-      token == null ||
-      type !== "solana-smart-wallet" ||
-      recipient == null ||
-      amount == null
-    ) {
+    if (!wallet || !recipient || !amount) {
       alert("Transfer: missing required fields");
       return;
     }
 
     // Validate Solana recipient address
-    if (token === "sol" && !isSolanaAddressValid(recipient)) {
+    if (!isSolanaAddressValid(recipient)) {
       alert("Transfer: Invalid Solana recipient address");
       return;
     }
 
     try {
-      setIsLoading(true);
-      function buildTransaction() {
-        return token === "sol"
-          ? createSolTransferTransaction(wallet?.address!, recipient!, amount!)
-          : createTokenTransferTransaction(
-              wallet?.address!,
-              recipient!,
-              process.env.NEXT_PUBLIC_USDC_TOKEN_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", // USDC token mint
-              amount!
-            );
-      }
-
-      const txn = await buildTransaction();
-      const txnHash = await wallet.sendTransaction({
-        transaction: txn,
+      reset(); // Clear any previous errors
+      setTxnHash(null);
+      
+      const hash = await transferFunds({
+        token,
+        recipient,
+        amount,
       });
-      setTxnHash(`https://solscan.io/tx/${txnHash}?cluster=devnet`);
+
+      if (hash) {
+        setTxnHash(`https://solscan.io/tx/${hash}?cluster=devnet`);
+      }
     } catch (err) {
       console.error("Transfer: ", err);
-      alert("Transfer: " + err);
-    } finally {
-      setIsLoading(false);
+      alert("Transfer: " + (err instanceof Error ? err.message : String(err)));
     }
   }
 
@@ -108,6 +90,7 @@ export function TransferFunds() {
               type="number"
               className="w-full px-3 py-2 border rounded-md text-sm"
               placeholder="0.00"
+              value={amount || ""}
               onChange={(e) => setAmount(Number(e.target.value))}
             />
           </div>
@@ -118,10 +101,16 @@ export function TransferFunds() {
             type="text"
             className="w-full px-3 py-2 border rounded-md text-sm"
             placeholder="Enter wallet address"
+            value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
           />
         </div>
       </div>
+      {error && (
+        <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+          Error: {error.message}
+        </div>
+      )}
       <div className="flex flex-col gap-2 w-full">
         <button
           className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${
