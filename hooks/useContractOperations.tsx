@@ -23,6 +23,12 @@ export interface CreateCampaignInput {
   runningDays: number;
   hoursPerDay: number;
   baseFeePerHour: number; // In SOL
+  initialBudget?: number; // In SOL
+}
+
+export interface AddBudgetInput {
+  campaignId: number;
+  amount: number; // In SOL
 }
 
 /**
@@ -36,6 +42,7 @@ export function useContractOperations() {
   const transferMutation = api.contracts.transfer.useMutation();
   const executeMutation = api.contracts.executeSoulboardMethod.useMutation();
   const createCampaignMutation = api.contracts.createCampaign.useMutation();
+  const addBudgetMutation = api.contracts.addBudget.useMutation();
   
   // tRPC queries
   const getBalance = api.contracts.getBalance.useQuery;
@@ -151,6 +158,50 @@ export function useContractOperations() {
   };
 
   /**
+   * Add budget to an existing campaign using tRPC and wallet
+   */
+  const addBudget = async (input: AddBudgetInput): Promise<string | null> => {
+    if (!wallet || type !== "solana-smart-wallet") {
+      throw new Error("Wallet not connected or wrong type");
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Call tRPC mutation to get transaction
+      const result = await addBudgetMutation.mutateAsync({
+        wallet: {
+          address: wallet.address,
+          type: "solana-smart-wallet",
+        },
+        ...input,
+      });
+
+      // Deserialize and send transaction through wallet
+      const transactionBuffer = Buffer.from(result.transaction, 'base64');
+      const transaction = VersionedTransaction.deserialize(transactionBuffer);
+
+      // Send transaction through wallet
+      const txHash = await wallet.sendTransaction({ transaction });
+      
+      console.log("Budget added:", {
+        txHash,
+        campaignPDA: result.campaignPDA,
+        campaignId: result.campaignId,
+        message: result.message,
+        details: result.details,
+      });
+      
+      return txHash;
+    } catch (error) {
+      console.error("Add budget error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
    * Get balance for current wallet
    */
   const useWalletBalance = (tokenMint?: string) => {
@@ -199,13 +250,14 @@ export function useContractOperations() {
 
   return {
     // State
-    isLoading: isLoading || transferMutation.isPending || executeMutation.isPending || createCampaignMutation.isPending,
+    isLoading: isLoading || transferMutation.isPending || executeMutation.isPending || createCampaignMutation.isPending || addBudgetMutation.isPending,
     wallet,
     
     // Actions
     executeTransfer,
     executeContractMethod,
     createCampaign,
+    addBudget,
     
     // Queries (hooks)
     useWalletBalance,
@@ -224,6 +276,12 @@ export function useContractOperations() {
       error: createCampaignMutation.error,
       data: createCampaignMutation.data,
       reset: createCampaignMutation.reset,
+    },
+    addBudgetState: {
+      isLoading: addBudgetMutation.isPending,
+      error: addBudgetMutation.error,
+      data: addBudgetMutation.data,
+      reset: addBudgetMutation.reset,
     },
     contractMethodState: {
       isLoading: executeMutation.isPending,

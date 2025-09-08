@@ -42,6 +42,13 @@ const createCampaignSchema = z.object({
   runningDays: z.number().int().positive().max(365),
   hoursPerDay: z.number().int().positive().max(24),
   baseFeePerHour: z.number().positive(), // In SOL, will be converted to lamports
+  initialBudget: z.number().positive().optional(), // In SOL, will be converted to lamports
+});
+
+const addBudgetSchema = z.object({
+  wallet: walletSchema,
+  campaignId: z.number().int().positive(),
+  amount: z.number().positive(), // In SOL, will be converted to lamports
 });
 
 export const contractsRouter = createTRPCRouter({
@@ -68,6 +75,11 @@ export const contractsRouter = createTRPCRouter({
           input.baseFeePerHour * anchor.web3.LAMPORTS_PER_SOL
         );
 
+        // Convert initial budget from SOL to lamports if provided
+        const initialBudgetLamports = input.initialBudget 
+          ? new anchor.BN(input.initialBudget * anchor.web3.LAMPORTS_PER_SOL)
+          : new anchor.BN(0);
+
         // Derive campaign PDA
         const [campaignPDA] = anchor.web3.PublicKey.findProgramAddressSync(
           [
@@ -92,7 +104,6 @@ export const contractsRouter = createTRPCRouter({
           { commitment: "confirmed" }
         );
 
-        // Create program instance with explicit program ID
         const program = new Program(
           soulboardIdl as anchor.Idl,
           provider
@@ -115,6 +126,127 @@ export const contractsRouter = createTRPCRouter({
           })
           .instruction();
 
+        const instructions = [instruction];
+
+        // Add budget if initial budget is provided
+        if (input.initialBudget && input.initialBudget > 0) {
+          const addBudgetInstruction = await program.methods
+            .addBudget(input.campaignId, initialBudgetLamports)
+            .accountsPartial({
+              authority: authorityPubkey,
+              campaign: campaignPDA,
+              systemProgram: SystemProgram.programId,
+            })
+            .instruction();
+          
+          instructions.push(addBudgetInstruction);
+        }
+
+        // Create transaction
+        const { blockhash } = await ctx.connection.getLatestBlockhash();
+        const transaction = new VersionedTransaction(
+          new anchor.web3.TransactionMessage({
+            payerKey: authorityPubkey,
+            recentBlockhash: blockhash,
+            instructions: instructions,
+          }).compileToV0Message()
+        );
+
+        return {
+          transaction: Buffer.from(transaction.serialize()).toString('base64'),
+          campaignPDA: campaignPDA.toString(),
+          campaignId: input.campaignId,
+          message: `Campaign "${input.campaignName}" creation transaction prepared${input.initialBudget ? ` with initial budget of ${input.initialBudget} SOL` : ''}`,
+          details: {
+            runningDays: input.runningDays,
+            hoursPerDay: input.hoursPerDay,
+            baseFeePerHour: input.baseFeePerHour,
+            baseFeePerHourLamports: baseFeePerHourLamports.toString(),
+            initialBudget: input.initialBudget || 0,
+            initialBudgetLamports: initialBudgetLamports.toString(),
+          },
+        };
+      } catch (error) {
+        console.error("Create campaign error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Campaign creation failed",
+        });
+      }
+    }),
+
+  /**
+   * Add budget to an existing campaign
+   */
+  addBudget: publicProcedure
+    .input(addBudgetSchema)
+    .mutation(async ({ input, ctx }) => {
+      try {
+        // Validate wallet address
+        let authorityPubkey: PublicKey;
+        try {
+          authorityPubkey = new PublicKey(input.wallet.address);
+        } catch {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid wallet address",
+          });
+        }
+
+        // Convert amount from SOL to lamports
+        const amountLamports = new anchor.BN(
+          input.amount * anchor.web3.LAMPORTS_PER_SOL
+        );
+
+        // Derive campaign PDA
+        const [campaignPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("campaign"),
+            authorityPubkey.toBuffer(),
+            new anchor.BN(input.campaignId).toBuffer("le", 4),
+          ],
+          ctx.soulboardProgramId
+        );
+
+        // Create a mock wallet for transaction building
+        const mockWallet = {
+          publicKey: authorityPubkey,
+          signTransaction: async () => { throw new Error("Mock wallet"); },
+          signAllTransactions: async () => { throw new Error("Mock wallet"); },
+        };
+
+        // Create provider and program instance
+        const provider = new AnchorProvider(
+          ctx.connection,
+          mockWallet as any,
+          { commitment: "confirmed" }
+        );
+
+        const program = new Program(
+          soulboardIdl as anchor.Idl,
+          provider
+        ) as Program<SoulboardCore>;
+
+        // Check if campaign exists
+        try {
+          await program.account.campaign.fetch(campaignPDA);
+        } catch {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Campaign with ID ${input.campaignId} not found`,
+          });
+        }
+
+        // Build the add budget instruction
+        const instruction = await program.methods
+          .addBudget(input.campaignId, amountLamports)
+          .accountsPartial({
+            authority: authorityPubkey,
+            campaign: campaignPDA,
+            systemProgram: SystemProgram.programId,
+          })
+          .instruction();
+
         // Create transaction
         const { blockhash } = await ctx.connection.getLatestBlockhash();
         const transaction = new VersionedTransaction(
@@ -129,19 +261,17 @@ export const contractsRouter = createTRPCRouter({
           transaction: Buffer.from(transaction.serialize()).toString('base64'),
           campaignPDA: campaignPDA.toString(),
           campaignId: input.campaignId,
-          message: `Campaign "${input.campaignName}" creation transaction prepared`,
+          message: `Added ${input.amount} SOL budget to campaign ${input.campaignId}`,
           details: {
-            runningDays: input.runningDays,
-            hoursPerDay: input.hoursPerDay,
-            baseFeePerHour: input.baseFeePerHour,
-            baseFeePerHourLamports: baseFeePerHourLamports.toString(),
+            amount: input.amount,
+            amountLamports: amountLamports.toString(),
           },
         };
       } catch (error) {
-        console.error("Create campaign error:", error);
+        console.error("Add budget error:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error instanceof Error ? error.message : "Campaign creation failed",
+          message: error instanceof Error ? error.message : "Add budget failed",
         });
       }
     }),
@@ -349,6 +479,81 @@ export const contractsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invalid address or failed to fetch balance",
+        });
+      }
+    }),
+
+  /**
+   * Get campaigns created by a user
+   */
+  getUserCampaigns: publicProcedure
+    .input(z.object({
+      userAddress: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const userPubkey = new PublicKey(input.userAddress);
+        
+        // Create a mock wallet for the program instance
+        const mockWallet = {
+          publicKey: userPubkey,
+          signTransaction: async () => { throw new Error("Mock wallet"); },
+          signAllTransactions: async () => { throw new Error("Mock wallet"); },
+        };
+
+        // Create provider and program instance
+        const provider = new AnchorProvider(
+          ctx.connection,
+          mockWallet as any,
+          { commitment: "confirmed" }
+        );
+
+        const program = new Program(
+          soulboardIdl as anchor.Idl,
+          provider
+        ) as Program<SoulboardCore>;
+
+        // Get all program accounts that are campaigns for this user
+        const campaignAccounts = await program.account.campaign.all([
+          {
+            memcmp: {
+              offset: 8, // Skip discriminator
+              bytes: userPubkey.toBase58(),
+            },
+          },
+        ]);
+
+        // Transform the campaign data for frontend consumption
+        const campaigns = campaignAccounts.map((campaign) => {
+          const data = campaign.account as any;
+          return {
+            publicKey: campaign.publicKey.toString(),
+            authority: data.authority.toString(),
+            campaignId: data.campaignId,
+            campaignName: data.campaignName,
+            campaignDescription: data.campaignDescription,
+            campaignBudget: data.campaignBudget.toString(),
+            campaignStatus: data.campaignStatus,
+            campaignProviders: data.campaignProviders.map((p: any) => p.toString()),
+            campaignLocations: data.campaignLocations.map((l: any) => l.toString()),
+            runningDays: data.runningDays,
+            hoursPerDay: data.hoursPerDay,
+            baseFeePerHour: data.baseFeePerHour.toString(),
+            platformFee: data.platformFee.toString(),
+            totalDistributed: data.totalDistributed.toString(),
+            campaignPerformance: data.campaignPerformance,
+          };
+        });
+
+        return {
+          campaigns,
+          total: campaigns.length,
+        };
+      } catch (error) {
+        console.error("Get user campaigns error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to fetch campaigns",
         });
       }
     }),

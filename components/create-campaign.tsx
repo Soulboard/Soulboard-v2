@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useContractOperations, type CreateCampaignInput } from "@/hooks/useContractOperations";
+import { api } from "@/trpc/react";
 
 export function CreateCampaignForm() {
   const { createCampaign, createCampaignState, isLoading, wallet } = useContractOperations();
+  const utils = api.useUtils();
   
   const [formData, setFormData] = useState<CreateCampaignInput>({
     campaignId: 1,
@@ -13,6 +15,7 @@ export function CreateCampaignForm() {
     runningDays: 7,
     hoursPerDay: 8,
     baseFeePerHour: 0.001, // 0.001 SOL per hour
+    initialBudget: 0, // Initial budget in SOL
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,6 +30,12 @@ export function CreateCampaignForm() {
       const txHash = await createCampaign(formData);
       if (txHash) {
         alert(`Campaign created successfully! Transaction: ${txHash}`);
+        
+        // Invalidate campaigns query to refresh the list
+        if (wallet.address) {
+          utils.contracts.getUserCampaigns.invalidate({ userAddress: wallet.address });
+        }
+        
         // Reset form or redirect
         setFormData({
           campaignId: formData.campaignId + 1, // Increment for next campaign
@@ -35,6 +44,7 @@ export function CreateCampaignForm() {
           runningDays: 7,
           hoursPerDay: 8,
           baseFeePerHour: 0.001,
+          initialBudget: 0,
         });
       }
     } catch (error) {
@@ -159,6 +169,24 @@ export function CreateCampaignForm() {
           />
           <p className="mt-1 text-sm text-gray-500">
             Total base cost: {(formData.runningDays * formData.hoursPerDay * formData.baseFeePerHour).toFixed(3)} SOL per device
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="initialBudget" className="block text-sm font-medium text-gray-700">
+            Initial Budget (SOL)
+          </label>
+          <input
+            type="number"
+            id="initialBudget"
+            step="0.001"
+            value={formData.initialBudget}
+            onChange={(e) => handleInputChange("initialBudget", parseFloat(e.target.value) || 0)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            min="0"
+          />
+          <p className="mt-1 text-sm text-gray-500">
+            Optional: Add initial budget to the campaign (you can add more later)
           </p>
         </div>
 

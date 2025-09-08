@@ -8,6 +8,9 @@ import { DelegatedSigner } from "@/components/delegated-signer";
 import { LogoutButton } from "@/components/logout";
 import { LoginButton } from "@/components/login";
 import { CreateCampaignForm } from "@/components/create-campaign";
+import { UserCampaigns } from "@/components/user-campaigns";
+import { ProviderManagement } from "@/components/provider-management";
+import { ProviderTestingPanel } from "@/components/provider-testing-panel";
 
 export function HomeContent() {
   const { wallet, status: walletStatus } = useWallet();
@@ -105,11 +108,34 @@ export function HomeContent() {
         <DelegatedSigner />
       </div>
 
+      {/* User Campaigns Section */}
+      <div className="mt-8">
+        <UserCampaigns />
+      </div>
+
       {/* Campaign Creation Section */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Create Campaign</h2>
         <CreateCampaignForm />
       </div>
+
+      {/* Provider Management Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Provider Management</h2>
+        <ProviderManagement />
+      </div>
+
+      {/* API Testing Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">API Testing</h2>
+        <ProviderTestingPanel />
+      </div>
+
+      {/* Locations and Providers Section */}
+      
+
+      {/* Location Management Section */}
+    
     </div>
   );
 }
