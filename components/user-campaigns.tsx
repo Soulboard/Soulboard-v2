@@ -4,25 +4,24 @@ import { useState, useEffect } from "react";
 import { useWallet } from "@crossmint/client-sdk-react-ui";
 import { api } from "@/trpc/react";
 import { AddBudgetForm } from "@/components/add-budget";
+import { AddLocation } from "@/components/add-location";
+import { LocationsList } from "@/components/locations-list";
 
 type CampaignStatus = "active" | "paused" | "completed" | "cancelled";
 
 interface Campaign {
   publicKey: string;
   authority: string;
-  campaignId: number;
-  campaignName: string;
-  campaignDescription: string;
-  campaignBudget: string;
-  campaignStatus: { [key: string]: any };
-  campaignProviders: string[];
-  campaignLocations: string[];
-  runningDays: number;
-  hoursPerDay: number;
-  baseFeePerHour: string;
-  platformFee: string;
-  totalDistributed: string;
-  campaignPerformance: any[];
+  name: string;
+  description: string;
+  budget: string;
+  remaining: string;
+  spent: string;
+  isActive: boolean;
+  isPaused: boolean;
+  devicesCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function UserCampaigns() {
@@ -34,7 +33,7 @@ export function UserCampaigns() {
     isLoading,
     error,
     refetch,
-  } = api.contracts.getUserCampaigns.useQuery(
+  } = api.campaigns.getUserCampaigns.useQuery(
     {
       userAddress: wallet?.address || "",
     },
@@ -119,7 +118,7 @@ export function UserCampaigns() {
   }
 
   const campaigns = campaignsData?.campaigns || [];
-  const totalCampaigns = campaignsData?.total || 0;
+  const totalCampaigns = campaignsData?.totalCampaigns || 0;
 
   return (
     <div className="bg-white rounded-xl border shadow-sm p-5">
@@ -162,60 +161,64 @@ export function UserCampaigns() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className="font-medium text-gray-900">{campaign.campaignName}</h3>
-                    <p className="text-sm text-gray-500">ID: {campaign.campaignId}</p>
+                    <h3 className="font-medium text-gray-900">{campaign.name}</h3>
+                    <p className="text-sm text-gray-500">Campaign</p>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      campaign.campaignStatus
-                    )}`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      campaign.isActive 
+                        ? "bg-green-100 text-green-800"
+                        : campaign.isPaused
+                        ? "bg-yellow-100 text-yellow-800" 
+                        : "bg-gray-100 text-gray-800"
+                    }`}
                   >
-                    {getStatusText(campaign.campaignStatus)}
+                    {campaign.isActive ? "Active" : campaign.isPaused ? "Paused" : "Completed"}
                   </span>
                 </div>
                 
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                  {campaign.campaignDescription}
+                  {campaign.description}
                 </p>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                   <div>
                     <span className="text-gray-500">Budget:</span>
-                    <p className="font-medium">{formatSOL(campaign.campaignBudget)} SOL</p>
+                    <p className="font-medium">{formatSOL(campaign.budget)} SOL</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Duration:</span>
-                    <p className="font-medium">{campaign.runningDays} days</p>
+                    <span className="text-gray-500">Spent:</span>
+                    <p className="font-medium">{formatSOL(campaign.spent)} SOL</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Hours/Day:</span>
-                    <p className="font-medium">{campaign.hoursPerDay}h</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Rate:</span>
-                    <p className="font-medium">{formatSOL(campaign.baseFeePerHour)} SOL/h</p>
+                    <span className="text-gray-500">Remaining:</span>
+                    <p className="font-medium">{formatSOL(campaign.remaining)} SOL</p>
                   </div>
                 </div>
                 
-                {campaign.campaignProviders.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">
-                      {campaign.campaignProviders.length} provider{campaign.campaignProviders.length !== 1 ? "s" : ""} • 
-                      {campaign.campaignLocations.length} location{campaign.campaignLocations.length !== 1 ? "s" : ""}
+                      Devices: {campaign.devicesCount}
                     </span>
+                    <div className="flex gap-2">
+                      <LocationsList
+                        campaignId={parseInt(campaign.publicKey.slice(-8), 16)}
+                        campaignName={campaign.name}
+                        onLocationRemoved={() => refetch()}
+                      />
+                      <AddLocation 
+                        campaignId={parseInt(campaign.publicKey.slice(-8), 16)}
+                        campaignName={campaign.name}
+                        onSuccess={() => refetch()}
+                      />
+                      <AddBudgetForm 
+                        campaignId={parseInt(campaign.publicKey.slice(-8), 16)}
+                        campaignName={campaign.name}
+                        onSuccess={() => refetch()}
+                      />
+                    </div>
                   </div>
-                )}
-
-                {/* Add Budget Section */}
-                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
-                  <span className="text-xs text-gray-500">
-                    Distributed: {formatSOL(campaign.totalDistributed)} SOL
-                  </span>
-                  <AddBudgetForm 
-                    campaignId={campaign.campaignId}
-                    campaignName={campaign.campaignName}
-                    onSuccess={() => refetch()}
-                  />
                 </div>
               </div>
             ))}
