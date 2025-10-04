@@ -1,6 +1,9 @@
-import { ProviderManagement } from "@/components/provider-management";
+import { CreateCampaignForm } from "@/components/create-campaign";
+import { UserCampaigns } from "@/components/user-campaigns";
+import { ArrowLeft, Plus, Sparkles, Zap } from "lucide-react";
+import Link from "next/link";
 
-export  function HomeContent() {
+export default function CampaignsPage() {
   return (
     <div className="min-h-screen bg-white text-black relative overflow-hidden">
       {/* Purple Gradient Blobs - matching hero theme */}
@@ -14,18 +17,18 @@ export  function HomeContent() {
         {/* Hero Header */}
         <div className="mb-10 text-center max-w-4xl mx-auto -mt-8">
           <h1 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
-            Providers 
+            Campaigns that 
             <br />
             <span className="relative inline-block">
-              Management
+              are legendary
               <div className="absolute -bottom-2 left-0 right-0 h-3 bg-purple-200/50 -rotate-1"></div>
             </span>
           </h1>
         </div>
 
-        {/* Provider Management Section */}
+        {/* Create New Campaign Section */}
         <div className="mt-4">
-          <ProviderManagement />
+          <CreateCampaignForm />
         </div>
       </div>
     </div>

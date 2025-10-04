@@ -3,42 +3,52 @@
 import { useState } from "react";
 import { useContractOperations, type CreateCampaignInput } from "@/hooks/useContractOperations";
 import { api } from "@/trpc/react";
+import { toast, Toaster } from "react-hot-toast";
 
 export function CreateCampaignForm() {
   const { createCampaign, createCampaignState, isLoading, wallet } = useContractOperations();
   const utils = api.useUtils();
-  
+
+  const [step, setStep] = useState(1);
+
   const [formData, setFormData] = useState<CreateCampaignInput>({
-    campaignId: 1,
+    campaignId: 0,
     campaignName: "",
     campaignDescription: "",
-    runningDays: 7,
-    hoursPerDay: 8,
-    baseFeePerHour: 0.001, // 0.001 SOL per hour
-    initialBudget: 0, // Initial budget in SOL
+    runningDays: 0,
+    hoursPerDay: 0,
+    baseFeePerHour: 0.001,
+    initialBudget: 0,
   });
+
+  const steps = ["Basics", "Details", "Duration", "Budget", "Review"];
+
+  const handleInputChange = (field: keyof CreateCampaignInput, value: string | number) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!wallet) {
-      alert("Please connect your wallet first");
+      toast.error("Please connect your wallet first");
       return;
     }
 
     try {
       const txHash = await createCampaign(formData);
       if (txHash) {
-        alert(`Campaign created successfully! Transaction: ${txHash}`);
-        
-        // Invalidate campaigns query to refresh the list
+        toast.success(`Campaign created successfully! Transaction: ${txHash}`);
+
         if (wallet.address) {
           utils.contracts.getUserCampaigns.invalidate({ userAddress: wallet.address });
         }
-        
-        // Reset form or redirect
+
         setFormData({
-          campaignId: formData.campaignId + 1, // Increment for next campaign
+          campaignId: formData.campaignId + 1,
           campaignName: "",
           campaignDescription: "",
           runningDays: 7,
@@ -46,176 +56,262 @@ export function CreateCampaignForm() {
           baseFeePerHour: 0.001,
           initialBudget: 0,
         });
+        setStep(1);
       }
     } catch (error) {
       console.error("Campaign creation failed:", error);
-      alert(`Campaign creation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(
+        `Campaign creation failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
-  const handleInputChange = (field: keyof CreateCampaignInput, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Create New Campaign</h2>
-      
-      {!wallet && (
-        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-          Please connect your wallet to create a campaign.
-        </div>
-      )}
+    <div className="w-full max-w-4xl mx-auto p-2">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            fontFamily: "Inter, sans-serif",
+            borderRadius: "12px",
+            padding: "12px 16px",
+            background: "#f3f4f6",
+            color: "#111827",
+          },
+        }}
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="campaignId" className="block text-sm font-medium text-gray-700">
-            Campaign ID
-          </label>
-          <input
-            type="number"
-            id="campaignId"
-            value={formData.campaignId}
-            onChange={(e) => handleInputChange("campaignId", parseInt(e.target.value))}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
-            min="1"
-          />
-          <p className="mt-1 text-sm text-gray-500">Unique identifier for your campaign</p>
-        </div>
+      {/* Outer shield */}
+      <div className="bg-purple-100/60 backdrop-blur-sm border border-purple-200 shadow-lg rounded-3xl p-6">
+        {/* Inner shield */}
+        <div className="bg-purple-50/80 border border-purple-200 rounded-2xl shadow-inner p-8">
+          
+          {!wallet && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg text-base">
+              Please connect your wallet to create a campaign.
+            </div>
+          )}
 
-        <div>
-          <label htmlFor="campaignName" className="block text-sm font-medium text-gray-700">
-            Campaign Name
-          </label>
-          <input
-            type="text"
-            id="campaignName"
-            value={formData.campaignName}
-            onChange={(e) => handleInputChange("campaignName", e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
-            maxLength={100}
-            placeholder="Enter campaign name"
-          />
-        </div>
+          {/* Circular Step Progress */}
+          <div className="mb-8 flex justify-between items-center relative">
+            {steps.map((s, i) => {
+              const isCompleted = step > i + 1;
+              const isCurrent = step === i + 1;
+              return (
+                <div key={i} className="flex-1 flex items-center">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 text-sm font-semibold transition-all ${
+                      isCompleted
+                        ? "bg-[#223241] border-[#223241] text-white"
+                        : isCurrent
+                        ? "bg-white border-[#223241] text-[#223241]"
+                        : "bg-white border-gray-300 text-gray-400"
+                    }`}
+                  >
+                    {i + 1}
+                  </div>
 
-        <div>
-          <label htmlFor="campaignDescription" className="block text-sm font-medium text-gray-700">
-            Campaign Description
-          </label>
-          <textarea
-            id="campaignDescription"
-            value={formData.campaignDescription}
-            onChange={(e) => handleInputChange("campaignDescription", e.target.value)}
-            rows={3}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
-            maxLength={500}
-            placeholder="Describe your campaign"
-          />
-        </div>
+                  <span
+                    className={`ml-2 text-xs md:text-sm font-medium ${
+                      isCompleted || isCurrent ? "text-[#223241]" : "text-gray-400"
+                    }`}
+                  >
+                    {s}
+                  </span>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="runningDays" className="block text-sm font-medium text-gray-700">
-              Running Days
-            </label>
-            <input
-              type="number"
-              id="runningDays"
-              value={formData.runningDays}
-              onChange={(e) => handleInputChange("runningDays", parseInt(e.target.value))}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-              min="1"
-              max="365"
-            />
+                  {i < steps.length - 1 && (
+                    <div
+                      className={`flex-1 h-1 mx-2 rounded-full transition-all ${
+                        step > i + 1 ? "bg-[#223241]" : "bg-gray-300"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          <div>
-            <label htmlFor="hoursPerDay" className="block text-sm font-medium text-gray-700">
-              Hours Per Day
-            </label>
-            <input
-              type="number"
-              id="hoursPerDay"
-              value={formData.hoursPerDay}
-              onChange={(e) => handleInputChange("hoursPerDay", parseInt(e.target.value))}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-              min="1"
-              max="24"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Step 1 */}
+            {step === 1 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-base font-semibold text-gray-800 mb-2">
+                    Campaign ID
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.campaignId}
+                    onChange={(e) => handleInputChange("campaignId", parseInt(e.target.value))}
+                    min="1"
+                    required
+                    className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-base font-semibold text-gray-800 mb-2">
+                    Campaign Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.campaignName}
+                    onChange={(e) => handleInputChange("campaignName", e.target.value)}
+                    maxLength={100}
+                    required
+                    className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 2 */}
+            {step === 2 && (
+              <div>
+                <label className="block text-base font-semibold text-gray-800 mb-2">
+                  Campaign Description
+                </label>
+                <textarea
+                  value={formData.campaignDescription}
+                  onChange={(e) => handleInputChange("campaignDescription", e.target.value)}
+                  rows={5}
+                  maxLength={500}
+                  required
+                  className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                />
+              </div>
+            )}
+
+            {/* Step 3 */}
+            {step === 3 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-base font-semibold text-gray-800 mb-2">
+                    Running Days
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.runningDays}
+                    onChange={(e) => handleInputChange("runningDays", parseInt(e.target.value))}
+                    min="1"
+                    max="365"
+                    required
+                    className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-base font-semibold text-gray-800 mb-2">
+                    Hours Per Day
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.hoursPerDay}
+                    onChange={(e) => handleInputChange("hoursPerDay", parseInt(e.target.value))}
+                    min="1"
+                    max="24"
+                    required
+                    className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 4 */}
+            {step === 4 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-base font-semibold text-gray-800 mb-2">
+                    Base Fee Per Hour (SOL)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    value={formData.baseFeePerHour}
+                    onChange={(e) =>
+                      handleInputChange("baseFeePerHour", parseFloat(e.target.value))
+                    }
+                    required
+                    className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Total base cost:{" "}
+                    {(
+                      formData.runningDays *
+                      formData.hoursPerDay *
+                      formData.baseFeePerHour
+                    ).toFixed(3)}{" "}
+                    SOL per device
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-base font-semibold text-gray-800 mb-2">
+                    Initial Budget (SOL)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formData.initialBudget}
+                    onChange={(e) =>
+                      handleInputChange("initialBudget", parseFloat(e.target.value) || 0)
+                    }
+                    className="w-full border rounded-lg px-4 py-3 text-base shadow-sm focus:ring-2 focus:ring-[#223241]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 5 */}
+            {step === 5 && (
+              <div className="bg-gray-50 border rounded-lg p-6 text-base space-y-2">
+                <p><strong>ID:</strong> {formData.campaignId}</p>
+                <p><strong>Name:</strong> {formData.campaignName}</p>
+                <p><strong>Description:</strong> {formData.campaignDescription}</p>
+                <p><strong>Duration:</strong> {formData.runningDays} days, {formData.hoursPerDay} hrs/day</p>
+                <p><strong>Base Fee:</strong> {formData.baseFeePerHour} SOL/hr</p>
+                <p><strong>Budget:</strong> {formData.initialBudget} SOL</p>
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex justify-between pt-4">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                  className="px-6 py-3 text-base rounded-lg border border-gray-300 bg-gray-100 hover:bg-gray-200"
+                >
+                  Back
+                </button>
+              )}
+              {step < steps.length && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step + 1)}
+                  className="ml-auto px-6 py-3 text-base rounded-lg bg-[#223241] text-white hover:bg-[#1a2631]"
+                >
+                  Next
+                </button>
+              )}
+              {step === steps.length && (
+                <button
+                  type="submit"
+                  disabled={isLoading || !wallet}
+                  className={`ml-auto px-6 py-3 text-base rounded-lg ${
+                    isLoading || !wallet
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-green-600 text-white hover:bg-green-700"
+                  }`}
+                >
+                  {isLoading ? "Creating..." : "Create Campaign"}
+                </button>
+              )}
+            </div>
+          </form>
         </div>
-
-        <div>
-          <label htmlFor="baseFeePerHour" className="block text-sm font-medium text-gray-700">
-            Base Fee Per Hour (SOL)
-          </label>
-          <input
-            type="number"
-            id="baseFeePerHour"
-            step="0.001"
-            value={formData.baseFeePerHour}
-            onChange={(e) => handleInputChange("baseFeePerHour", parseFloat(e.target.value))}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            required
-            min="0.001"
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            Total base cost: {(formData.runningDays * formData.hoursPerDay * formData.baseFeePerHour).toFixed(3)} SOL per device
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="initialBudget" className="block text-sm font-medium text-gray-700">
-            Initial Budget (SOL)
-          </label>
-          <input
-            type="number"
-            id="initialBudget"
-            step="0.001"
-            value={formData.initialBudget}
-            onChange={(e) => handleInputChange("initialBudget", parseFloat(e.target.value) || 0)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            min="0"
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            Optional: Add initial budget to the campaign (you can add more later)
-          </p>
-        </div>
-
-        {createCampaignState.error && (
-          <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            Error: {createCampaignState.error.message}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={isLoading || !wallet}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-            isLoading || !wallet
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          }`}
-        >
-          {isLoading ? "Creating Campaign..." : "Create Campaign"}
-        </button>
-      </form>
-
-      {createCampaignState.data && (
-        <div className="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-          <p className="font-medium">Campaign Creation Details:</p>
-          <p>Campaign PDA: {createCampaignState.data.campaignPDA}</p>
-          <p>Message: {createCampaignState.data.message}</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

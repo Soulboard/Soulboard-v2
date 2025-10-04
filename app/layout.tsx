@@ -1,17 +1,19 @@
+import React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Inter } from 'next/font/google';
 import "./globals.css";
 import { Providers } from "@/app/providers";
+import { Toaster } from "react-hot-toast"; // Added toast provider
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const spaceGrotesk = Space_Grotesk({ 
+  subsets: ['latin'],
+  variable: '--font-heading',
+})
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-body',
+})
 
 export const metadata: Metadata = {
   title: "Solana Wallets Quickstart",
@@ -26,9 +28,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+       className={`${spaceGrotesk.variable} ${inter.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                fontFamily: 'Inter, sans-serif',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                background: '#f5f5f5',
+                color: '#223241',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              },
+            }}
+          />
+        </Providers>
       </body>
     </html>
   );
