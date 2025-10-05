@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useWallet } from "@crossmint/client-sdk-react-ui";
 import { api } from "@/trpc/react";
 import { useProviderOperations } from "@/hooks/useProviderOperations";
@@ -16,8 +19,16 @@ import {
   Plus,
 } from "lucide-react";
 
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
 export function ProviderManagement() {
   const { wallet } = useWallet();
+  
   
   const {
     registerProvider,
@@ -170,6 +181,56 @@ export function ProviderManagement() {
       location: locationString,
     }));
   };
+
+   function LocationPicker({ onLocationSelect }: { onLocationSelect: (location: string) => void }) {
+    const [position, setPosition] = useState<[number, number] | null>(null);
+    const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]); // India center as fallback
+    const [mapKey, setMapKey] = useState(0); // For forcing map re-render
+
+    useEffect(() => {
+      // Get user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const userLocation: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+            setMapCenter(userLocation);
+            setMapKey(prev => prev + 1); // Force map to re-render with new center
+          },
+          (error) => {
+            console.log("Location access denied, using default center of India");
+          }
+        );
+      }
+    }, []);
+
+    const LocationMarker = () => {
+      useMapEvents({
+        click(e) {
+          const { lat, lng } = e.latlng;
+          setPosition([lat, lng]);
+          onLocationSelect(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        },
+      });
+
+      return position ? <Marker position={position} /> : null;
+    };
+
+    return (
+      <MapContainer
+        key={mapKey}
+        center={mapCenter}
+        zoom={13}
+        style={{ height: '320px', width: '100%', borderRadius: '12px' }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        <LocationMarker />
+      </MapContainer>
+    );
+  }
+
 
   // if there's no wallet connected — show the same "Wallet Required" UI you had
   if (!wallet?.address) {
@@ -416,30 +477,25 @@ export function ProviderManagement() {
                       <p className="mt-1.5 text-xs text-white/50">Your primary business location or service area</p>
                     </div>
 
-                    <div className="relative">
-                      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden h-[320px] relative group">
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-green-500/10">
-                          <div className="text-center">
-                            <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                              <MapPin className="w-8 h-8 text-purple-400" />
-                            </div>
-                            <p className="text-white/80 font-semibold mb-1">Interactive Location Picker</p>
-                            <p className="text-white/50 text-sm mb-4">Click anywhere on the map to set your location</p>
-                            {providerForm.location && (
-                              <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 inline-block max-w-md">
-                                <p className="text-xs text-white/60 mb-1">Selected Location</p>
-                                <p className="text-sm font-medium text-white break-all">
-                                  {providerForm.location}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                  <div className="relative">
+                      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                        <LocationPicker 
+                          onLocationSelect={(location) => handleInputChange("location", location)}
+                        />
                       </div>
+                      
+                      {providerForm.location && (
+                        <div className="mt-3 bg-white/10 backdrop-blur-sm rounded-lg p-3">
+                          <p className="text-xs text-white/60 mb-1">Selected Coordinates</p>
+                          <p className="text-sm font-medium text-white">
+                            {providerForm.location}
+                          </p>
+                        </div>
+                      )}
 
                       <div className="mt-3 flex items-start gap-2 text-xs text-white/50">
                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                        <p>Click on the map to automatically select your location, or type the address manually above.</p>
+                        <p>Map will center on your location automatically. Click anywhere to select coordinates, or type the address manually above.</p>
                       </div>
                     </div>
                   </div>

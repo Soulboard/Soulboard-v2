@@ -126,3 +126,7 @@
 .backdrop-blur-custom {
   backdrop-filter: blur(8.25px);
 }
+
+.leaflet-container {
+  z-index: 1;
+}
