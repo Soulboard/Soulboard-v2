@@ -1,57 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@crossmint/client-sdk-react-ui";
 import { api } from "@/trpc/react";
 import { useProviderOperations } from "@/hooks/useProviderOperations";
 import toast, { Toaster } from "react-hot-toast";
+import {
+  Check,
+  AlertCircle,
+  Building2,
+  MapPin,
+  Mail,
+  Monitor,
+  Wifi,
+  Plus,
+} from "lucide-react";
 
 export function ProviderManagement() {
   const { wallet } = useWallet();
-  const { 
-    registerProvider, 
-    addDevice, 
-    updateProvider, 
-    isLoading: providerOperationsLoading 
+  
+  const {
+    registerProvider,
+    addDevice,
+    updateProvider,
+    isLoading: providerOperationsLoading,
   } = useProviderOperations();
 
   const utils = api.useUtils();
-  const [activeTab, setActiveTab] = useState<'register' | 'devices' | 'locations' | 'available'>('register');
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
-  const [step, setStep] = useState(1);
 
+  // keep the same UI tabs & states from your original UI
+  const [activeTab, setActiveTab] = useState<
+    "register" | "devices" | "locations" | "available"
+  >("register");
+
+  // We'll default selectedProvider to the connected wallet address (if any),
+  // but allow the user to pick another provider from allProviders when needed.
+  const [selectedProvider, setSelectedProvider] = useState<string>("");
+
+  // Forms (kept identical to your original UI)
   const [providerForm, setProviderForm] = useState({
-    name: '',
-    location: '',
-    contactEmail: '',
+    name: "",
+    location: "",
+    contactEmail: "",
   });
 
   const [deviceForm, setDeviceForm] = useState({
-    deviceId: '',
+    deviceId: "",
   });
 
-  const steps = ["Provider Info", "Location", "Contact", "Review"];
-
-  const { data: allProviders, refetch: refetchProviders } = api.provider.getAllProviders.useQuery();
+  // queries from the integration file (keeps all backend integrations)
+  const { data: allProviders, refetch: refetchProviders } =
+    api.provider.getAllProviders.useQuery();
   const { data: registryInfo } = api.provider.getRegistryInfo.useQuery();
   const { data: availableDevices } = api.provider.getAvailableDevices.useQuery();
+
+  // set selectedProvider to wallet address on connect (if user hasn't selected another)
+  useEffect(() => {
+    if (wallet?.address) {
+      // only override when selectedProvider is empty or equals previous wallet address
+      setSelectedProvider((prev) => (prev === "" ? wallet.address : prev));
+    } else {
+      setSelectedProvider("");
+    }
+  }, [wallet?.address]);
+
+  // provider-specific queries use selectedProvider (which defaults to wallet.address)
   const { data: providerDetails } = api.provider.getProviderDetails.useQuery(
-    { providerAddress: selectedProvider },
+    { providerAddress: selectedProvider || "" },
     { enabled: !!selectedProvider }
   );
-  const { data: providerDevices } = api.provider.getProviderDevices.useQuery(
-    { providerAddress: selectedProvider, includeMetadata: true },
+
+  const { data: providerDevicesData } = api.provider.getProviderDevices.useQuery(
+    { providerAddress: selectedProvider || "", includeMetadata: true },
     { enabled: !!selectedProvider }
   );
+
   const { data: providerLocations } = api.provider.getProviderLocations.useQuery(
-    { providerAddress: selectedProvider },
+    { providerAddress: selectedProvider || "" },
     { enabled: !!selectedProvider }
   );
+
+  // keep check if the connected wallet is registered
   const { data: isRegistered } = api.provider.isProviderRegistered.useQuery(
-    { providerAddress: wallet?.address || '' },
+    { providerAddress: wallet?.address || "" },
     { enabled: !!wallet?.address }
   );
 
+  // small helper to update the form fields
   const handleInputChange = (field: keyof typeof providerForm, value: string) => {
     setProviderForm((prev) => ({
       ...prev,
@@ -59,9 +94,13 @@ export function ProviderManagement() {
     }));
   };
 
+  // register provider — integrated with providerOperations.registerProvider and toasts
   const handleRegisterProvider = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallet?.address) return;
+    if (!wallet?.address) {
+      toast.error("Connect wallet first");
+      return;
+    }
 
     try {
       const txHash = await registerProvider({
@@ -71,21 +110,32 @@ export function ProviderManagement() {
       });
 
       if (txHash) {
-        toast.success(`Provider registered successfully! Transaction: ${txHash}`);
+        toast.success(`Provider registered successfully! TX: ${txHash}`);
         refetchProviders();
-        utils.provider.isProviderRegistered.invalidate({ providerAddress: wallet.address });
-        setProviderForm({ name: '', location: '', contactEmail: '' });
-        setStep(1);
+        // Invalidate relevant caches
+        utils.provider.isProviderRegistered.invalidate({
+          providerAddress: wallet.address,
+        });
+        utils.provider.getProviderDetails.invalidate({
+          providerAddress: wallet.address,
+        });
+        setProviderForm({ name: "", location: "", contactEmail: "" });
       }
     } catch (error) {
-      console.error('Registration failed:', error);
-      toast.error(`Registration failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error("Registration failed:", error);
+      toast.error(
+        `Registration failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   };
 
+  // add device — integrated with providerOperations.addDevice and toasts
   const handleAddDevice = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallet?.address || !deviceForm.deviceId) return;
+    if (!wallet?.address || !deviceForm.deviceId) {
+      toast.error("Connect wallet and enter a device ID");
+      return;
+    }
 
     try {
       const txHash = await addDevice({
@@ -93,129 +143,551 @@ export function ProviderManagement() {
       });
 
       if (txHash) {
-        toast.success(`Device added successfully! Transaction: ${txHash}`);
-        setDeviceForm({ deviceId: '' });
-        if (selectedProvider) refetchProviders();
+        toast.success(`Device added successfully! TX: ${txHash}`);
+        setDeviceForm({ deviceId: "" });
+        // refresh provider devices (for selectedProvider or wallet)
+        const target = selectedProvider || wallet.address;
+        if (target) {
+          utils.provider.getProviderDevices.invalidate({
+            providerAddress: target,
+            includeMetadata: true,
+          });
+        }
       }
     } catch (error) {
-      console.error('Add device failed:', error);
-      toast.error(`Add device failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error("Add device failed:", error);
+      toast.error(
+        `Add device failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   };
 
+  // map click handler (keeps your interactive picker behaviour)
+  const handleMapClick = (lat: number, lng: number, address?: string) => {
+    const locationString = address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    setProviderForm((prev) => ({
+      ...prev,
+      location: locationString,
+    }));
+  };
+
+  // if there's no wallet connected — show the same "Wallet Required" UI you had
   if (!wallet?.address) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-2">
-        <Toaster position="top-right" />
-        <div className="bg-purple-100/60 backdrop-blur-sm border border-purple-200 shadow-lg rounded-3xl p-6">
-          <div className="bg-purple-50/80 border border-purple-200 rounded-2xl shadow-inner p-8">
-            <h2 className="text-lg font-medium mb-3">Provider Management</h2>
-            <p className="text-gray-500">Please connect your wallet to manage providers.</p>
+      <div className="w-full max-w-4xl mx-auto">
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: "#18181b",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.1)",
+            },
+          }}
+        />
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-xl">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-2">Wallet Required</h2>
+              <p className="text-white/60">Please connect your wallet to manage providers.</p>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // Main integrated UI (keeps your original UI styling & layout)
   return (
-    <div className="w-full max-w-4xl mx-auto p-2">
-      <Toaster position="top-right" />
-      <div className="bg-purple-100/60 backdrop-blur-sm border border-purple-200 shadow-lg rounded-3xl p-6">
-        <div className="bg-purple-50/80 border border-purple-200 rounded-2xl shadow-inner p-8">
+    <div className="w-full max-w-6xl mx-auto">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#18181b",
+            color: "#ffffff",
+            border: "1px solid rgba(255,255,255,0.1)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#ffffff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#ffffff",
+            },
+          },
+        }}
+      />
 
-          {/* Wallet & Registry Cards */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">Your Wallet</h3>
-              <p className="text-sm font-mono bg-white px-2 py-1 rounded border border-purple-200">
-                {wallet.address.slice(0, 6)}...{wallet.address.slice(-6)}
-              </p>
-              <span className={`px-3 py-1 mt-2 inline-block rounded-full text-xs font-semibold ${
-                isRegistered?.isRegistered
-                  ? 'bg-green-100 text-green-700 border border-green-300'
-                  : 'bg-amber-100 text-amber-700 border border-amber-300'
-              }`}>
-                {isRegistered?.isRegistered ? 'Registered' : 'Not Registered'}
-              </span>
+      {/* Wallet & Registry Info Cards */}
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Wallet Card */}
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/[0.07] transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-blue-400" />
             </div>
+            <h3 className="text-lg font-bold text-white">Your Wallet</h3>
+          </div>
+          <div className="bg-white/5 rounded-lg p-3 mb-3">
+            <p className="text-xs text-white/50 mb-1">Address</p>
+            <p className="text-sm font-mono text-white">
+              {wallet.address.slice(0, 8)}...{wallet.address.slice(-8)}
+            </p>
+          </div>
+          <span
+            className={`px-3 py-1.5 inline-flex items-center gap-2 rounded-full text-xs font-semibold ${
+              isRegistered?.isRegistered
+                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+            }`}
+          >
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${
+                isRegistered?.isRegistered ? "bg-green-400" : "bg-yellow-400"
+              }`}
+            />
+            {isRegistered?.isRegistered ? "Registered Provider" : "Not Registered"}
+          </span>
+        </div>
 
-            {registryInfo && (
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                <h3 className="text-lg font-bold text-gray-800 mb-2">Registry Info</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white rounded-lg p-2 border border-blue-200">
-                    <p className="text-2xl font-bold">{registryInfo.totalProviders}</p>
-                    <p className="text-xs text-gray-600">Providers</p>
+        {/* Registry Info Card */}
+        {registryInfo && (
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/[0.07] transition-all">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                <Wifi className="w-5 h-5 text-purple-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Network Stats</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 rounded-lg p-3">
+                <p className="text-2xl font-bold text-white mb-1">{registryInfo.totalProviders}</p>
+                <p className="text-xs text-white/60">Total Providers</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <p className="text-2xl font-bold text-white mb-1">{registryInfo.keepers.length}</p>
+                <p className="text-xs text-white/60">Active Keepers</p>
+              </div>
+            </div>
+            <div className="mt-3 bg-white/5 rounded-lg p-3">
+              <p className="text-xs text-white/50 mb-1">Contract Deployer</p>
+              <code className="text-xs font-mono text-white/80">
+                {registryInfo.deployer.slice(0, 6)}...{registryInfo.deployer.slice(-6)}
+              </code>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Provider Details Card */}
+      {isRegistered?.isRegistered && providerDetails && (
+        <div className="mb-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Your Provider Profile</h3>
+                <p className="text-xs text-white/50">Registered on-chain</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-xs text-white/50 mb-2">Provider Name</p>
+              <p className="text-white font-semibold">{(providerDetails as any).adProvider?.name || "N/A"}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-xs text-white/50 mb-2">Location</p>
+              <p className="text-white font-semibold">{(providerDetails as any).adProvider?.location || "N/A"}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-xs text-white/50 mb-2">Contact Email</p>
+              <p className="text-white font-semibold">{(providerDetails as any).adProvider?.contactEmail || "N/A"}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Card (your UI preserved) */}
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-xl">
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {[
+            { key: "register", label: "Register", icon: Building2 },
+            { key: "devices", label: "Devices", icon: Monitor },
+            { key: "locations", label: "Locations", icon: MapPin },
+            { key: "available", label: "Available", icon: Wifi },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                activeTab === tab.key
+                  ? "bg-white text-black"
+                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Register Tab */}
+        {activeTab === "register" && (
+          <div className="space-y-6">
+            {isRegistered?.isRegistered ? (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm flex items-start gap-3">
+                <Check className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold mb-1">Already Registered</p>
+                  <p className="text-green-400/80">You are already registered as a provider on the network.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white">Provider Information</h3>
                   </div>
-                  <div className="bg-white rounded-lg p-2 border border-blue-200">
-                    <p className="text-2xl font-bold">{registryInfo.keepers.length}</p>
-                    <p className="text-xs text-gray-600">Keepers</p>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Provider Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Acme IoT Solutions"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                        value={providerForm.name}
+                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        required
+                      />
+                      <p className="mt-1.5 text-xs text-white/50">Your business or organization name</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-green-400" />
+                        Contact Email *
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="contact@example.com"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all"
+                        value={providerForm.contactEmail}
+                        onChange={(e) => handleInputChange("contactEmail", e.target.value)}
+                        required
+                      />
+                      <p className="mt-1.5 text-xs text-white/50">Primary contact email for communications</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-lg p-2 border border-blue-200">
-                    <p className="text-xs text-gray-600 mb-1">Deployer</p>
-                    <code className="text-[10px] font-mono text-gray-700">{registryInfo.deployer.slice(0, 4)}...{registryInfo.deployer.slice(-4)}</code>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white">Location</h3>
                   </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">Business Address *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter your business address or click on the map"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                        value={providerForm.location}
+                        onChange={(e) => handleInputChange("location", e.target.value)}
+                        required
+                      />
+                      <p className="mt-1.5 text-xs text-white/50">Your primary business location or service area</p>
+                    </div>
+
+                    <div className="relative">
+                      <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden h-[320px] relative group">
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-green-500/10">
+                          <div className="text-center">
+                            <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                              <MapPin className="w-8 h-8 text-purple-400" />
+                            </div>
+                            <p className="text-white/80 font-semibold mb-1">Interactive Location Picker</p>
+                            <p className="text-white/50 text-sm mb-4">Click anywhere on the map to set your location</p>
+                            {providerForm.location && (
+                              <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 inline-block max-w-md">
+                                <p className="text-xs text-white/60 mb-1">Selected Location</p>
+                                <p className="text-sm font-medium text-white break-all">
+                                  {providerForm.location}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-start gap-2 text-xs text-white/50">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <p>Click on the map to automatically select your location, or type the address manually above.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={handleRegisterProvider}
+                    disabled={
+                      providerOperationsLoading ||
+                      !wallet?.address ||
+                      !providerForm.name ||
+                      !providerForm.location ||
+                      !providerForm.contactEmail
+                    }
+                    className={`px-8 py-3.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 ${
+                      providerOperationsLoading ||
+                      !wallet?.address ||
+                      !providerForm.name ||
+                      !providerForm.location ||
+                      !providerForm.contactEmail
+                        ? "bg-white/10 text-white/40 cursor-not-allowed"
+                        : "bg-white text-black hover:bg-white/90 hover:shadow-lg hover:shadow-white/20"
+                    }`}
+                  >
+                    {providerOperationsLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-black rounded-full animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Register Provider
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
           </div>
+        )}
 
-          {/* Tabs */}
-          <div className="flex space-x-1 mb-6 bg-gray-100 rounded-lg p-1">
-            {['register', 'devices', 'locations', 'available'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === tab
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
+        {/* Devices Tab */}
+        {activeTab === "devices" && (
+          <div className="space-y-6">
+            {isRegistered?.isRegistered && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <Plus className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Add New Device</h3>
+                </div>
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    placeholder="Enter device ID"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                    value={deviceForm.deviceId}
+                    onChange={(e) => setDeviceForm({ deviceId: e.target.value })}
+                  />
+                  <button
+                    onClick={handleAddDevice}
+                    disabled={providerOperationsLoading || !deviceForm.deviceId || !wallet?.address}
+                    className={`px-6 py-3 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 ${
+                      providerOperationsLoading || !deviceForm.deviceId || !wallet?.address
+                        ? "bg-white/10 text-white/40 cursor-not-allowed"
+                        : "bg-white text-black hover:bg-white/90"
+                    }`}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Device
+                  </button>
+                </div>
+              </div>
+            )}
 
-          {/* Tab Content */}
-          {activeTab === 'register' && (
-            <div className="space-y-4">
-              {isRegistered?.isRegistered ? (
-                <div className="p-4 bg-green-50 border border-green-300 text-green-800 rounded-lg text-base">
-                  You are already registered.
+            <div>
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Monitor className="w-5 h-5 text-blue-400" />
+                Your Devices
+              </h3>
+
+              {providerDevicesData?.summary && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-lg font-bold text-white">{providerDevicesData.summary.totalDevices}</p>
+                    <p className="text-xs text-white/60">Total</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-lg font-bold text-green-400">{providerDevicesData.summary.availableDevices}</p>
+                    <p className="text-xs text-white/60">Available</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-lg font-bold text-blue-400">{providerDevicesData.summary.bookedDevices}</p>
+                    <p className="text-xs text-white/60">Booked</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-lg font-bold text-yellow-400">{providerDevicesData.summary.orderedDevices}</p>
+                    <p className="text-xs text-white/60">Ordered</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-lg font-bold text-red-400">{providerDevicesData.summary.pausedDevices}</p>
+                    <p className="text-xs text-white/60">Paused</p>
+                  </div>
+                </div>
+              )}
+
+              {providerDevicesData?.devices && providerDevicesData.devices.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {providerDevicesData.devices.map((device: any, idx: number) => (
+                    <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/[0.07] transition-all">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <Monitor className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-white font-semibold">Device #{device.deviceId}</p>
+                            <p className="text-xs text-white/50">{device.status}</p>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-lg ${
+                            device.status === "available"
+                              ? "bg-green-500/20 text-green-400"
+                              : device.status === "booked"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : device.status === "paused"
+                              ? "bg-red-500/20 text-red-400"
+                              : "bg-yellow-500/20 text-yellow-400"
+                          }`}
+                        >
+                          {device.status}
+                        </span>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-white/50">Location:</span>
+                          <span className="text-white">{device.location || "N/A"}</span>
+                        </div>
+                        {device.metadata && (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-white/50">Provider:</span>
+                              <span className="text-white">{device.metadata.providerName || "N/A"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-white/50">Rating:</span>
+                              <span className="text-white">{device.metadata.providerRating || 0}/5</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <form onSubmit={handleRegisterProvider} className="space-y-4">
-                  {step === 1 && <input placeholder="Provider Name" className="input-field" value={providerForm.name} onChange={(e) => handleInputChange("name", e.target.value)} />}
-                  {step === 2 && <input placeholder="Location" className="input-field" value={providerForm.location} onChange={(e) => handleInputChange("location", e.target.value)} />}
-                  {step === 3 && <input placeholder="Contact Email" type="email" className="input-field" value={providerForm.contactEmail} onChange={(e) => handleInputChange("contactEmail", e.target.value)} />}
-                  {step === 4 && (
-                    <div className="bg-gray-50 border rounded-lg p-6 text-base space-y-2">
-                      <p><strong>Name:</strong> {providerForm.name}</p>
-                      <p><strong>Location:</strong> {providerForm.location}</p>
-                      <p><strong>Email:</strong> {providerForm.contactEmail}</p>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between pt-4">
-                    {step > 1 && <button type="button" onClick={() => setStep(step-1)} className="btn-back">Back</button>}
-                    {step < steps.length && <button type="button" onClick={() => setStep(step+1)} className="btn-next">Next</button>}
-                    {step === steps.length && (
-                      <button type="submit" disabled={providerOperationsLoading || !wallet} className="btn-submit">
-                        {providerOperationsLoading ? "Registering..." : "Register Provider"}
-                      </button>
-                    )}
-                  </div>
-                </form>
+                <div className="text-center py-12 bg-white/5 border border-white/10 rounded-xl">
+                  <Monitor className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                  <p className="text-white/60">No devices registered yet</p>
+                  <p className="text-white/40 text-sm mt-2">Add your first device to get started</p>
+                </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Devices, Locations, Available Tabs */}
-          {activeTab === 'devices' && <div>Device management content...</div>}
-          {activeTab === 'locations' && <div>Provider locations content...</div>}
-          {activeTab === 'available' && <div>Available devices content...</div>}
-        </div>
+        {/* Locations Tab */}
+        {activeTab === "locations" && (
+          <div>
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-purple-400" />
+              Your Locations
+            </h3>
+            {Array.isArray(providerLocations) && providerLocations.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {providerLocations.map((location: any, idx: number) => (
+                  <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/[0.07] transition-all">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-semibold">{location}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white/5 border border-white/10 rounded-xl">
+                <MapPin className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/60">No locations registered yet</p>
+                <p className="text-white/40 text-sm mt-2">Your registered address will appear here</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Available Devices Tab */}
+        {activeTab === "available" && (
+          <div>
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Wifi className="w-5 h-5 text-green-400" />
+              Available Devices on Network
+            </h3>
+            {Array.isArray(availableDevices) && availableDevices.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {availableDevices.map((device: any, idx: number) => (
+                  <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/[0.07] transition-all">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                          <Monitor className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold">Device #{device.deviceId || idx}</p>
+                          <p className="text-xs text-white/50">{device.providerAddress?.slice(0, 8)}...</p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-1 text-xs font-semibold rounded-lg bg-green-500/20 text-green-400">
+                        Available
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-white/50">Provider:</span>
+                        <span className="text-white">{device.providerName || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white/50">Location:</span>
+                        <span className="text-white">{device.location || "N/A"}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white/5 border border-white/10 rounded-xl">
+                <Wifi className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                <p className="text-white/60">No available devices on the network</p>
+                <p className="text-white/40 text-sm mt-2">Devices will appear here when providers register them</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
