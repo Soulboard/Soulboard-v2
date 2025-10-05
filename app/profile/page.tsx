@@ -114,16 +114,24 @@ export default function UserCampaigns() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-10">
         {/* Wallet Header */}
         <div className="flex justify-between items-center mb-10">
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-            <Wallet className="w-4 h-4 text-white/60" />
-            <span className="font-mono text-sm text-white/80">{formatAddress(wallet.address)}</span>
-            <button
-              onClick={handleCopyWallet}
-              className="text-white/50 hover:text-white/80 transition-colors"
+          <div className="flex items-center gap-4">
+            <a
+              href="/"
+              className="text-white/60 hover:text-white transition-colors text-sm"
             >
-              <Copy className="w-3.5 h-3.5" />
-            </button>
-            {copiedWallet && <span className="text-xs text-green-400 ml-1">✓</span>}
+              ← Back to Home
+            </a>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+              <Wallet className="w-4 h-4 text-white/60" />
+              <span className="font-mono text-sm text-white/80">{formatAddress(wallet.address)}</span>
+              <button
+                onClick={handleCopyWallet}
+                className="text-white/50 hover:text-white/80 transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+              {copiedWallet && <span className="text-xs text-green-400 ml-1">✓</span>}
+            </div>
           </div>
 
           <div className="text-sm text-white/60">

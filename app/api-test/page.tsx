@@ -108,22 +108,12 @@ export function HomeContent() {
         <DelegatedSigner />
       </div>
 
-      {/* User Campaigns Section */}
-      <div className="mt-8">
-        <UserCampaigns />
-      </div>
+      
 
       {/* Campaign Creation Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Create Campaign</h2>
-        <CreateCampaignForm />
-      </div>
+      
 
-      {/* Provider Management Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Provider Management</h2>
-        <ProviderManagement />
-      </div>
+    
 
       {/* API Testing Section */}
       <div className="mt-8">
