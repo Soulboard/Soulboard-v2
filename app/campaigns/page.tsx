@@ -22,25 +22,6 @@ export default function CampaignsPage() {
           <span className="text-sm font-medium">Back to Home</span>
         </Link>
 
-        {/* Hero Header */}
-        <div className="mb-16 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-sm mb-6">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium text-white/80">Campaign Management</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            Create campaigns that
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
-              drive results
-            </span>
-          </h1>
-          
-          <p className="text-lg text-white/60 max-w-2xl mx-auto">
-            Launch and manage your advertising campaigns with blockchain-powered transparency and control
-          </p>
-        </div>
 
 
         {/* Create New Campaign Section */}

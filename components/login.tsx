@@ -7,7 +7,8 @@ export function LoginButton() {
 
   return (
     <button
-      className="w-full py-2 px-4 rounded-md text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+      className="w-full py-2 px-4 rounded-md text-sm font-medium bg-white text-black border border-gray-300 hover:bg-gray-100 transition-colors"
+
       onClick={login}
     >
       Connect Wallet
