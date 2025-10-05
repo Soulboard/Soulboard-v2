@@ -143,7 +143,7 @@ export default function UserCampaigns() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 rop-blur-backdsm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-white/60">Devices Connected</p>
               <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center">
@@ -213,7 +213,7 @@ export default function UserCampaigns() {
             campaigns.map((campaign: Campaign) => (
               <div
                 key={campaign.publicKey}
-                className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm hover:border-white/20 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-2xl p-6  hover:border-white/20 transition-colors"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">

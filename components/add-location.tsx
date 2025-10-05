@@ -99,7 +99,7 @@ export function AddLocation({ campaignId, campaignName, onSuccess }: AddLocation
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60  overflow-y-auto h-full w-full z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-[9999] flex items-center justify-center p-4">
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
