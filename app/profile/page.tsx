@@ -143,7 +143,7 @@ export default function UserCampaigns() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 rop-blur-backdsm">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-white/60">Devices Connected</p>
               <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center">
@@ -153,7 +153,7 @@ export default function UserCampaigns() {
             <h2 className="text-4xl font-bold">{mockStats.devicesConnected}</h2>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-white/60">Total Collected</p>
               <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center">
@@ -165,7 +165,7 @@ export default function UserCampaigns() {
         </div>
 
         {/* Campaign Activity Chart */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm mb-10">
+        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-8 mb-10">
           <h2 className="text-xl font-semibold mb-6">Campaign Activity</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={campaignActivityData}>
@@ -205,7 +205,7 @@ export default function UserCampaigns() {
           <h2 className="text-xl font-semibold">Your Campaigns</h2>
           
           {campaigns.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center backdrop-blur-sm">
+            <div className="bg-zinc-900 border border-white/10 rounded-2xl p-12 text-center">
               <p className="text-white/60 mb-2">No campaigns yet</p>
               <p className="text-white/40 text-sm">Create your first campaign to get started</p>
             </div>
@@ -213,7 +213,7 @@ export default function UserCampaigns() {
             campaigns.map((campaign: Campaign) => (
               <div
                 key={campaign.publicKey}
-                className="bg-white/5 border border-white/10 rounded-2xl p-6  hover:border-white/20 transition-colors"
+                className="bg-zinc-900 border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-colors"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
