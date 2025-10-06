@@ -27,8 +27,8 @@ L.Icon.Default.mergeOptions({
 });
 
 export function ProviderManagement() {
-  //const { wallet } = useWallet();
-  const wallet = { address: "8s4ZzYpM7rQ7w7WZx3rXg2ZfV7k5nRz1a2b3c4d5e6f" };
+  const { wallet } = useWallet();
+  // const wallet = { address: "8s4ZzYpM7rQ7w7WZx3rXg2ZfV7k5nRz1a2b3c4d5e6f" };
   
   const {
     registerProvider,

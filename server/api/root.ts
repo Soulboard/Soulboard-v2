@@ -3,6 +3,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { contractsRouter } from "@/server/api/routers/contracts";
 import { providerRouter } from "@/server/api/routers/provider";
 import { campaignsRouter } from "@/server/api/routers/campaigns";
+import { oracleRouter } from "@/server/api/routers/oracle";
 
 /**
  * This is the primary router for your server.
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   contracts: contractsRouter,
   provider: providerRouter,
   campaigns: campaignsRouter,
+  oracle: oracleRouter,
 });
 
 // export type definition of API

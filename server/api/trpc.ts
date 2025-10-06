@@ -25,6 +25,10 @@ export const SOULBOARD_PROGRAM_ID = new PublicKey(
   '6GetNC8W9RUzWeTbk5VmKhfwpakhzAqjEPffGJMtq8y7',
 );
 
+export const ORACLE_PROGRAM_ID = new PublicKey(
+  'BkKcenZveLhg2LrHiX45hc937nQGpri2nvfvXfdcUZNN',
+);
+
 const DEFAULT_COMMITMENT: Commitment = 'confirmed';
 const DEFAULT_RPC = 'https://devnet.helius-rpc.com/?api-key=5f1828f6-a7b9-417d-9b7c-dadba932af8d';
 
@@ -54,6 +58,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     // Solana/Soulboard context
     connection,
     soulboardProgramId: SOULBOARD_PROGRAM_ID,
+    oracleProgramId: ORACLE_PROGRAM_ID,
     systemProgram: SystemProgram.programId,
    
   };
